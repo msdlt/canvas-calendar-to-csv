@@ -18,30 +18,13 @@ li {
 <li><label for="id"><strong>Numeric course ID</strong>, e.g. from canvas.ox.ac.uk/courses/######:</label> <input type="text" id="id" name="id" /></li>
 <li><label for="start"><strong>Start date</strong>, YYYY-MM-DD format: </label><input type="text" id="start" name="start" /></li>
 <li><label for="end"><strong>End date</strong>, YYYY-MM-DD format: </label><input type="text" id="end" name="end" /></li>
-<li>Go to this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>, which will open in a new tab/window.</li>
+<li>Open this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>. It will open in a new tab/window. If there are no events on that page, i.e. you just see [], then there are no events for the course in the date range you have entered. You can modify the fields above and click the link again.</li>
 <li>Copy and paste the entire contents of that page into the box below, then click the "Convert" button. <br />
 <textarea id="json" rows=3 cols=100></textarea><br />
 <button id="convert">Convert</button>
 </li>
 <li>This will generate a CSV file for you to save/download.</li>
-<!--li>Open the CSV file in a text editor and look for events that have been split onto multiple lines. This is normally indicated by lines starting with a &lt;p&gt; tag, where the description has been split onto multiple lines. Delete the line breaks before each &lt;p&gt; tag so that the entire event is on one line, then save the file. In Notepad++ (probably works in other editors too), you can do this as follows:
-<ol type="a">
-<li>Find a line that starts with a &lt;p&gt; tag</li>
-<li>Select from the end of the preceding line to the end of the &gt; in the &lt;p&gt; tag</li>
-<li>Open the "Replace" tool (Ctrl+H), which should put the selection from b. in the "Find what" box</li>
-<li>Enter &lt;p&gt; in the "Replace with" box</li>
-<li>Click "Replace all"</li>
-<li>Save the file</li>
-</ol>
-</li-->
-<li>Open Excel and go to Data > From Text, then select the file.</li>
-<li>In Text Import Wizard:
-<ol type="a">
-<li>Select "Delimited", then "Next".</li>
-<li>Select "Other" only and type ~ in box, then "Finish".</li>
-<li>Make sure it is inserting in cell A1 and click "OK".</li>
-</ol>
-<li>Check and edit the events as required, then save as CSV and import using the <a href="https://canvas.ox.ac.uk/courses/12009/pages/calendar-import-tool" target="_blank">Calendar Import tool</a> in the appropriate course in Canvas.</li>
+<li>Open in Excel and edit the events as required, then save as CSV and import using the <a href="https://canvas.ox.ac.uk/courses/12009/pages/calendar-import-tool" target="_blank">Calendar Import tool</a> in the appropriate course in Canvas.</li>
 </ol>
 <p><strong>IMPORTANT:</strong> If you are uploading events for a single section, e.g. a Medicine Year 5 firm, please make sure you <strong>select the correct Section</strong> from the "Section" dropdown in the Calendar Import tool. Otherwise, you will import the events for all students in the course, so they will all have their calendars cluttered up with events that are not for them. If you do this by mistake, you can delete the incorrect import using the bin button for that import, then try again.</p>
 
@@ -90,8 +73,10 @@ function updateURL(courseId, start, end) {
 function convertToCSV() {
 	const jsonText = $('#json').val();
 	const json = JSON.parse(jsonText);
+	const separator = ",";
 	
-	let csv = "Title~Description~Date~Start~End~Location~Address\r\n";
+	
+	let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "End" + separator + "Location" + separator + "Address\r\n";
 	json.forEach((event, index) => { 
 		if(event.parent_event_id === null) {
 			let start_split = event.start_at.split('-');
@@ -100,7 +85,7 @@ function convertToCSV() {
 			let end_split = event.end_at.split('-');
 			let end_time = end_split[2].substring(3,8);
 		
-			csv += "\"" + event.title + "\"~\"" + event.description + "\"~" + date + "~" + start_time + "~" + end_time + "~\"" + event.location_name + "\"~\"" + event.location_address + "\"\r\n";
+			csv += "\"" + event.title.replaceAll('"','""') + "\"" + separator + "\"" + event.description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + end_time + separator + "\"" + event.location_name.replaceAll('"','""') + "\"" + separator + "\"" + event.location_address.replaceAll('"','""') + "\"\r\n";
 		}
 	 })
 	console.log(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e'));
