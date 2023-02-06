@@ -19,7 +19,7 @@
 		<p>Follow these instructions to extract events from your existing Canvas calendar and convert them to a CSV file, which you can then modify and use to re-import the events into Canvas, e.g. for a different course or a repeat of the events for a different set ('Section' in Canvas-speak) of students in the same course.</p>
 		<p>Please note that this will only work for <strong>100 events at a time</strong>, as the Canvas API can only return this many items in one go. If you have more events than this, you will need to use the start/end date fields to split them up into chunks of less than 100.</p>
 		<ol>
-			<li>Make sure you are logged into <a href="https://canvas.ox.ac.uk/" target="_blank">Canvas</a> in this browser window.</li>
+			<li>Make sure you are logged into <a href="https://canvas.ox.ac.uk/" target="_blank">Canvas</a> in this browser session/window.</li>
 			<li><label for="id"><strong>Numeric course ID</strong>, e.g. from canvas.ox.ac.uk/courses/######:</label> <input type="text" id="id" name="id" /> (for the course you want to export the events from)</li>
 			<li><label for="start"><strong>Start date</strong>, YYYY-MM-DD format: </label><input type="text" id="start" name="start" /></li>
 			<li><label for="end"><strong>End date</strong>, YYYY-MM-DD format: </label><input type="text" id="end" name="end" /></li>
@@ -83,19 +83,31 @@
 				const json = JSON.parse($('#json').val());
 				const separator = ",";
 				
-				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "End" + separator + "Location" + separator + "Address\r\n";
+				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
 				json.forEach((event, index) => { 
 					if(event.parent_event_id === null) {
-						let start_split = event.start_at.split('-');
-						let date = start_split[2].substring(0,2) + "/" + start_split[1] + "/" + start_split[0];
-						let start_time = start_split[2].substring(3,8);
-						let end_split = event.end_at.split('-');
-						let end_time = end_split[2].substring(3,8);
+						let start = new Date(event.start_at);
+						let end = new Date(event.end_at);
+						let date = start.getDate()  + "/" + (start.getMonth() + 1)  + "/" + start.getFullYear();
+						let start_time = start.getHours() + ":" + start.getMinutes();
+						
+						let duration_secs = (end.getTime() - start.getTime())/1000;
+						let duration_hours = Math.floor(duration_secs/3600);
+						let duration_minutes = Math.floor((duration_hours*3600 - duration_secs)/60);
+						let duration = ('0' + duration_hours).slice(-2)  + ":" + ('0' + duration_minutes).slice(-2);
+						
+						//let start_split = event.start_at.split('-');
+						//let date = start_split[2].substring(0,2) + "/" + start_split[1] + "/" + start_split[0];
+						//let start_time = start_split[2].substring(3,8);
+						//let end_split = event.end_at.split('-');
+						//let end_time = end_split[2].substring(3,8);
 					
-						csv += "\"" + event.title.replaceAll('"','""') + "\"" + separator + "\"" + event.description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + end_time + separator + "\"" + event.location_name.replaceAll('"','""') + "\"" + separator + "\"" + event.location_address.replaceAll('"','""') + "\"\r\n";
+						csv += "\"" + event.title.replaceAll('"','""') + "\"" + separator + "\"" + event.description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + duration + separator + "\"" + event.location_name.replaceAll('"','""') + "\"" + separator + "\"" + event.location_address.replaceAll('"','""') + "\"\r\n";
 					}
 				 })
 				console.log(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e'));
+
+				//document.write(csv);
 
 				// Once we are done looping, download the .csv by creating a link
 				let link = document.createElement('a')
