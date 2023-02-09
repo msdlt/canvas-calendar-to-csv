@@ -16,7 +16,7 @@
 	</head>
 	<body>
 		<h1>Canvas Calendar to CSV</h1>
-		<p>Follow these instructions to extract events from your existing Canvas calendar and convert them to a CSV file, which you can then modify and use to re-import the events into Canvas, e.g. for a different course or a repeat of the events for a different set ('Section' in Canvas-speak) of students in the same course.</p>
+		<p>Follow these instructions to extract events from your existing Canvas calendar and convert them to a CSV file, which you can then modify and use to re-import the events into Canvas, e.g. for a different course, the next year, or a repeat of the events for a different set ('Section' in Canvas-speak) of students in the same course.</p>
 		<p>Please note that this will only work for <strong>100 events at a time</strong>, as the Canvas API can only return this many items in one go. If you have more events than this, you will need to use the start/end date fields to split them up into chunks of less than 100.</p>
 		<ol>
 			<li>Make sure you are logged into <a href="https://canvas.ox.ac.uk/" target="_blank">Canvas</a> in this browser session/window.</li>
@@ -29,7 +29,9 @@
 				<button id="convert">Convert</button>
 			</li>
 			<li>This will generate a CSV file for you to save/download.</li>
-			<li>Open in Excel and edit the events as required, then save as CSV</li>
+			<li>Open the CSV (typically in Excel), edit the events as required, then save as CSV.<ul>
+				<li>You can edit titles, dates, times and locations. Editing the Description field in the CSV is <strong>NOT</strong> recommended unless you know what you are doing - this is a rich text field represented by HTML code in the CSV file, and is best edited in the Canvas calendar after import.</li></ul>
+			</li>
 			<li>Import using the <a href="https://canvas.ox.ac.uk/courses/12009/pages/calendar-import-tool" target="_blank">Calendar Import Tool</a> in the appropriate course in Canvas.
 				<ul><li>If you are uploading events for a single section of students, e.g. a Medicine Year 5 Firm, please make sure you <strong>select the correct Section</strong> from the "Section" dropdown in the Calendar Import tool. Otherwise, you will import the events for all students in the course, so they will all have their calendars cluttered up with events that are not for them. If you do this by mistake, you can delete the incorrect import using the bin button for that import, then try again.</li></ul>
 			</li>
