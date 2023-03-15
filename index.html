@@ -104,7 +104,16 @@
 						//let end_split = event.end_at.split('-');
 						//let end_time = end_split[2].substring(3,8);
 					
-						csv += "\"" + event.title.replaceAll('"','""') + "\"" + separator + "\"" + event.description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + duration + separator + "\"" + event.location_name.replaceAll('"','""') + "\"" + separator + "\"" + event.location_address.replaceAll('"','""') + "\"\r\n";
+						let title = event.title;
+						if(title === null) { title = ""; }
+						let description = event.description;
+						if(description === null) { description = ""; }
+						let location_name = event.location_name;
+						if(location_name === null) { location_name = ""; }
+						let location_address = event.location_address;
+						if(location_address === null) { location_address = ""; }
+					
+						csv += "\"" + title.replaceAll('"','""') + "\"" + separator + "\"" + description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + duration + separator + "\"" + location_name.replaceAll('"','""') + "\"" + separator + "\"" + location_address.replaceAll('"','""') + "\"\r\n";
 					}
 				 })
 				console.log(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e'));
