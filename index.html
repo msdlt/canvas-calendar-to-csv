@@ -23,7 +23,12 @@
 			<li><label for="id"><strong>Numeric course ID</strong>, e.g. from canvas.ox.ac.uk/courses/######:</label> <input type="text" id="id" name="id" /> (for the course you want to export the events from)</li>
 			<li><label for="start"><strong>Start date</strong>, YYYY-MM-DD format: </label><input type="text" id="start" name="start" /></li>
 			<li><label for="end"><strong>End date</strong>, YYYY-MM-DD format: </label><input type="text" id="end" name="end" /></li>
-			<li>Open this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>. It will open in a new tab/window. If there are no events on that page, i.e. you just see [], then there are no events for the course in the date range you have entered. You can modify the fields above and click the link again.</li>
+			<li>Open this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>. It will open in a new tab/window and should you some messy-looking 'JSON' data/code. Please note:
+				<ul>
+					<li>Some browsers (e.g. Firefox) may default to showing a readable view of the JSON data, but this tool needs the raw data. If there is a "Raw Data" tab or similar, switch to that and copy the data from there.</li>
+					<li>If there are no events on that page, i.e. you just see [] in the raw data, then there are no events for the course in the date range you have entered. You can modify the fields above and click the link again.</li>
+				</ul>
+			</li>
 			<li>Copy and paste the entire contents of that page into the box below, then click the "Convert" button. <br />
 				<textarea id="json" rows=3 cols=100></textarea><br />
 				<button id="convert">Convert</button>
