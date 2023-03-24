@@ -91,7 +91,7 @@
 						let start = new Date(event.start_at);
 						let end = new Date(event.end_at);
 						let date = start.getDate()  + "/" + (start.getMonth() + 1)  + "/" + start.getFullYear();
-						let start_time = start.getHours() + ":" + start.getMinutes();
+						let start_time = ('0' + start.getHours()).slice(-2) + ":" + ('0' + start.getMinutes()).slice(-2);
 						
 						let duration_secs = (end.getTime() - start.getTime())/1000;
 						let duration_hours = Math.floor(duration_secs/3600);
