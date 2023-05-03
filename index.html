@@ -87,7 +87,7 @@
 			}
 
 			function convertToCSV() {
-				const json = JSON.parse($('#json').val());
+				let json = JSON.parse($('#json').val());
 				const separator = ",";
 				
 				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
@@ -127,11 +127,11 @@
 
 				// Once we are done looping, download the .csv by creating a link
 				let link = document.createElement('a')
-				link.id = 'download-csv'
+				link.id = 'download-csv-' + Date.now();
 				link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e')));
 				link.setAttribute('download', 'calendar_export.csv');
 				document.body.appendChild(link);
-				document.querySelector('#download-csv').click();
+				document.querySelector('#' + link.id).click();
 			}
 		</script>
 	</body>
