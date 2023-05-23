@@ -81,7 +81,7 @@
 
 			function updateURL(courseId, start, end) {
 				//Example API call to get calendar event JSON: https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=2022-07-17&end_date=2022-10-30&context_codes[]=course_149024&per_page=100
-				const URL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100";
+				const URL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100&excludes[]=child_events";
 				
 				$('#apilink').attr('href', URL);
 			}
@@ -92,7 +92,7 @@
 				
 				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
 				json.forEach((event, index) => { 
-					if(event.parent_event_id === null) {
+					if(event.parent_event_id === null) {	//Ignore child events, although these are now excluded in the API call
 						let start = new Date(event.start_at);
 						let end = new Date(event.end_at);
 						let date = start.getDate()  + "/" + (start.getMonth() + 1)  + "/" + start.getFullYear();
