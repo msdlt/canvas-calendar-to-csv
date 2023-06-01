@@ -59,35 +59,70 @@
 				$('#id').val(courseId);
 				$('#start').val(start);
 				$('#end').val(end);
-				updateURL(courseId, start, end);
+				let baseURL = updateURL(courseId, start, end);
 
 				$('#id').change(function() {
 					courseId = $('#id').val();
-					updateURL(courseId, start, end);
+					baseURL = updateURL(courseId, start, end);
 				});
 				$('#start').change(function() {
 					start = $('#start').val();
-					updateURL(courseId, start, end);
+					baseURL = updateURL(courseId, start, end);
 				});
 				$('#end').change(function() {
 					end = $('#end').val();
-					updateURL(courseId, start, end);
+					baseURL = updateURL(courseId, start, end);
 				});
 				
 				$('#convert').click(function() {
-					convertToCSV();
+					let json = getJSON(baseURL);
+					//let json = JSON.parse($('#json').val());
+					//convertToCSV(json);
 				});
 			});
 
 			function updateURL(courseId, start, end) {
 				//Example API call to get calendar event JSON: https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=2022-07-17&end_date=2022-10-30&context_codes[]=course_149024&per_page=100
-				const URL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100&excludes[]=child_events";
+				const baseURL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100&excludes[]=child_events";
 				
-				$('#apilink').attr('href', URL);
+				return baseURL; 
+				//$('#apilink').attr('href', URL);
+			}
+			
+			function getJSON(baseURL) {
+				console.log(baseURL);
+				let page = 1;
+				let URL = baseURL + "&page=" + page;
+				/*$.getJSON(URL, function(data) {
+					// The 'data' variable contains the JSON response
+					console.log(data);
+					// Do something with the data
+				})
+				.fail(function(xhr, status, error) {
+						console.error(status + ': ' + error);
+				});*/
+				
+				let finished = false;
+				
+				$.ajax({
+					url: URL,
+					dataType: 'json',
+					async: false, // Set async option to false
+					success: function(data) {
+						// The 'data' variable contains the JSON response
+						console.log(data);
+						
+						
+						// Do something with the data
+					},
+					error: function(xhr, status, error) {
+						console.error(status + ': ' + error);
+					}
+				});
+				
 			}
 
-			function convertToCSV() {
-				let json = JSON.parse($('#json').val());
+			function convertToCSV(json) {
 				const separator = ",";
 				
 				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
