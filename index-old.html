@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Canvas Calendar to CSV</title>
+		<link rel="icon" 
+			  type="image/png" 
+			  href="https://learntech.medsci.ox.ac.uk/public/favicon.ico">
+		<style>
+			body {
+				font-family: sans-serif;
+			}
+			li {
+				padding: 5px 0;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Canvas Calendar to CSV</h1>
+		<p>Follow these instructions to extract events from your existing Canvas calendar and convert them to a CSV file, which you can then modify and use to re-import the events into Canvas, e.g. for a different course, the next year, or a repeat of the events for a different set ('Section' in Canvas-speak) of students in the same course.</p>
+		<p>Please note that this will only work for <strong>100 events at a time</strong>, as the Canvas API can only return this many items in one go. If you have more events than this, you will need to use the start/end date fields to split them up into chunks of less than 100.</p>
+		<ol>
+			<li>Make sure you are logged into <a href="https://canvas.ox.ac.uk/" target="_blank">Canvas</a> in this browser session/window.</li>
+			<li><label for="id"><strong>Numeric course ID</strong>, e.g. from canvas.ox.ac.uk/courses/######:</label> <input type="text" id="id" name="id" /> (for the course you want to export the events from)</li>
+			<li><label for="start"><strong>Start date</strong>, YYYY-MM-DD format: </label><input type="text" id="start" name="start" /></li>
+			<li><label for="end"><strong>End date</strong>, YYYY-MM-DD format: </label><input type="text" id="end" name="end" /></li>
+			<li>Open this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>. It will open in a new tab/window and should you some messy-looking 'JSON' data/code. Please note:
+				<ul>
+					<li>Some browsers (e.g. Firefox) may default to showing a readable view of the JSON data, but this tool needs the raw data. If there is a "Raw Data" tab or similar, switch to that and copy the data from there.</li>
+					<li>If there are no events on that page, i.e. you just see [] in the raw data, then there are no events for the course in the date range you have entered. You can modify the fields above and click the link again.</li>
+				</ul>
+			</li>
+			<li>Copy and paste the entire contents of that page into the box below, then click the "Convert" button. <br />
+				<textarea id="json" rows=3 cols=100></textarea><br />
+				<button id="convert">Convert</button>
+			</li>
+			<li>This will generate a CSV file for you to save/download.</li>
+			<li>Open the CSV (typically in Excel), edit the events as required, then save as CSV.
+				<ul>
+					<li>You can edit titles, dates, times and locations. Editing the Description field in the CSV is <strong>NOT</strong> recommended unless you know what you are doing - this is a rich text field represented by HTML code in the CSV file, and is best edited in the Canvas calendar after import.</li>
+					<li>Where event decriptions have links to course content and you are exporting events for re-importing into a new Canvas course, the links will obviously point to the old/existing course. Page links can be updated in bulk by finding/replacing the old course IDs in the URLs with the new one, but links to other types of content will have item-specific IDs in them, so it is best to re-link them manually in the Canvas interface after import.</li>
+				</ul>
+			</li>
+			<li>Import using the <a href="https://canvas.ox.ac.uk/courses/12009/pages/calendar-import-tool" target="_blank">Calendar Import Tool</a> in the appropriate course in Canvas.
+				<ul><li>If you are uploading events for a single section of students, e.g. a Medicine Year 5 Firm, please make sure you <strong>select the correct Section</strong> from the "Section" dropdown in the Calendar Import tool. Otherwise, you will import the events for all students in the course, so they will all have their calendars cluttered up with events that are not for them. If you do this by mistake, you can delete the incorrect import using the bin button for that import, then try again.</li></ul>
+			</li>
+		</ol>
+		
+		<p>If you have any queries, problems or suggestions, please contact <a href="mailto: msdlt@medsci.ox.ac.uk">MSD Learning Technologies</a></p>
+
+		<script src="https://code.jquery.com/jquery-3.6.0.js" type="text/javascript"></script>
+		<script>
+			$( document ).ready(function() {
+				let courseId = "123456";
+				//let courseId = "149024";
+				let start = "2022-10-09";
+				//let start = "2022-10-31";
+				const today = new Date()
+				let end = today.toISOString().split('T')[0];
+				//let end = "2023-02-19";
+
+				
+				$('#id').val(courseId);
+				$('#start').val(start);
+				$('#end').val(end);
+				let baseURL = updateURL(courseId, start, end);
+
+				$('#id').change(function() {
+					courseId = $('#id').val();
+					baseURL = updateURL(courseId, start, end);
+				});
+				$('#start').change(function() {
+					start = $('#start').val();
+					baseURL = updateURL(courseId, start, end);
+				});
+				$('#end').change(function() {
+					end = $('#end').val();
+					baseURL = updateURL(courseId, start, end);
+				});
+				
+				$('#convert').click(function() {
+					let json = getJSON(baseURL);
+					//let json = JSON.parse($('#json').val());
+					//convertToCSV(json);
+				});
+			});
+
+			function updateURL(courseId, start, end) {
+				//Example API call to get calendar event JSON: https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=2022-07-17&end_date=2022-10-30&context_codes[]=course_149024&per_page=100
+				const baseURL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100&excludes[]=child_events";
+				
+				return baseURL; 
+				//$('#apilink').attr('href', URL);
+			}
+			
+			function getJSON(baseURL) {
+				console.log(baseURL);
+				let page = 1;
+				let URL = baseURL + "&page=" + page;
+				/*$.getJSON(URL, function(data) {
+					// The 'data' variable contains the JSON response
+					console.log(data);
+					// Do something with the data
+				})
+				.fail(function(xhr, status, error) {
+						console.error(status + ': ' + error);
+				});*/
+				
+				let finished = false;
+				
+				$.ajax({
+					url: URL,
+					dataType: 'json',
+					async: false, // Set async option to false
+					success: function(data) {
+						// The 'data' variable contains the JSON response
+						console.log(data);
+						
+						
+						// Do something with the data
+					},
+					error: function(xhr, status, error) {
+						console.error(status + ': ' + error);
+					}
+				});
+				
+			}
+
+			function convertToCSV(json) {
+				const separator = ",";
+				
+				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
+				json.forEach((event, index) => { 
+					if(event.parent_event_id === null) {	//Ignore child events, although these are now excluded in the API call
+						let start = new Date(event.start_at);
+						let end = new Date(event.end_at);
+						let date = start.getDate()  + "/" + (start.getMonth() + 1)  + "/" + start.getFullYear();
+						let start_time = ('0' + start.getHours()).slice(-2) + ":" + ('0' + start.getMinutes()).slice(-2);
+						
+						let duration_secs = (end.getTime() - start.getTime())/1000;
+						let duration_hours = Math.floor(duration_secs/3600);
+						let duration_minutes = Math.floor((duration_hours*3600 - duration_secs)/60);
+						let duration = ('0' + duration_hours).slice(-2)  + ":" + ('0' + duration_minutes).slice(-2);
+						
+						//let start_split = event.start_at.split('-');
+						//let date = start_split[2].substring(0,2) + "/" + start_split[1] + "/" + start_split[0];
+						//let start_time = start_split[2].substring(3,8);
+						//let end_split = event.end_at.split('-');
+						//let end_time = end_split[2].substring(3,8);
+					
+						let title = event.title;
+						if(title === null) { title = ""; }
+						let description = event.description;
+						if(description === null) { description = ""; }
+						let location_name = event.location_name;
+						if(location_name === null) { location_name = ""; }
+						let location_address = event.location_address;
+						if(location_address === null) { location_address = ""; }
+					
+						csv += "\"" + title.replaceAll('"','""') + "\"" + separator + "\"" + description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + duration + separator + "\"" + location_name.replaceAll('"','""') + "\"" + separator + "\"" + location_address.replaceAll('"','""') + "\"\r\n";
+					}
+				 })
+				console.log(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e'));
+
+				//document.write(csv);
+
+				// Once we are done looping, download the .csv by creating a link
+				let link = document.createElement('a')
+				link.id = 'download-csv-' + Date.now();
+				link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e')));
+				link.setAttribute('download', 'calendar_export.csv');
+				document.body.appendChild(link);
+				document.querySelector('#' + link.id).click();
+			}
+		</script>
+	</body>
+</html>

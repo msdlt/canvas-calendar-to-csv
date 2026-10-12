@@ -1,176 +1,253 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Canvas Calendar to CSV</title>
-		<link rel="icon" 
-			  type="image/png" 
-			  href="https://learntech.medsci.ox.ac.uk/public/favicon.ico">
-		<style>
-			body {
-				font-family: sans-serif;
-			}
-			li {
-				padding: 5px 0;
-			}
-		</style>
-	</head>
-	<body>
-		<h1>Canvas Calendar to CSV</h1>
-		<p>Follow these instructions to extract events from your existing Canvas calendar and convert them to a CSV file, which you can then modify and use to re-import the events into Canvas, e.g. for a different course, the next year, or a repeat of the events for a different set ('Section' in Canvas-speak) of students in the same course.</p>
-		<p>Please note that this will only work for <strong>100 events at a time</strong>, as the Canvas API can only return this many items in one go. If you have more events than this, you will need to use the start/end date fields to split them up into chunks of less than 100.</p>
-		<ol>
-			<li>Make sure you are logged into <a href="https://canvas.ox.ac.uk/" target="_blank">Canvas</a> in this browser session/window.</li>
-			<li><label for="id"><strong>Numeric course ID</strong>, e.g. from canvas.ox.ac.uk/courses/######:</label> <input type="text" id="id" name="id" /> (for the course you want to export the events from)</li>
-			<li><label for="start"><strong>Start date</strong>, YYYY-MM-DD format: </label><input type="text" id="start" name="start" /></li>
-			<li><label for="end"><strong>End date</strong>, YYYY-MM-DD format: </label><input type="text" id="end" name="end" /></li>
-			<li>Open this <a target="_blank" href="" id="apilink">Canvas API Calendar Link</a>. It will open in a new tab/window and should you some messy-looking 'JSON' data/code. Please note:
-				<ul>
-					<li>Some browsers (e.g. Firefox) may default to showing a readable view of the JSON data, but this tool needs the raw data. If there is a "Raw Data" tab or similar, switch to that and copy the data from there.</li>
-					<li>If there are no events on that page, i.e. you just see [] in the raw data, then there are no events for the course in the date range you have entered. You can modify the fields above and click the link again.</li>
-				</ul>
-			</li>
-			<li>Copy and paste the entire contents of that page into the box below, then click the "Convert" button. <br />
-				<textarea id="json" rows=3 cols=100></textarea><br />
-				<button id="convert">Convert</button>
-			</li>
-			<li>This will generate a CSV file for you to save/download.</li>
-			<li>Open the CSV (typically in Excel), edit the events as required, then save as CSV.
-				<ul>
-					<li>You can edit titles, dates, times and locations. Editing the Description field in the CSV is <strong>NOT</strong> recommended unless you know what you are doing - this is a rich text field represented by HTML code in the CSV file, and is best edited in the Canvas calendar after import.</li>
-					<li>Where event decriptions have links to course content and you are exporting events for re-importing into a new Canvas course, the links will obviously point to the old/existing course. Page links can be updated in bulk by finding/replacing the old course IDs in the URLs with the new one, but links to other types of content will have item-specific IDs in them, so it is best to re-link them manually in the Canvas interface after import.</li>
-				</ul>
-			</li>
-			<li>Import using the <a href="https://canvas.ox.ac.uk/courses/12009/pages/calendar-import-tool" target="_blank">Calendar Import Tool</a> in the appropriate course in Canvas.
-				<ul><li>If you are uploading events for a single section of students, e.g. a Medicine Year 5 Firm, please make sure you <strong>select the correct Section</strong> from the "Section" dropdown in the Calendar Import tool. Otherwise, you will import the events for all students in the course, so they will all have their calendars cluttered up with events that are not for them. If you do this by mistake, you can delete the incorrect import using the bin button for that import, then try again.</li></ul>
-			</li>
-		</ol>
-		
-		<p>If you have any queries, problems or suggestions, please contact <a href="mailto: msdlt@medsci.ox.ac.uk">MSD Learning Technologies</a></p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Calendar to CSV</title>
+  <link rel="icon" type="image/png" href="https://learntech.medsci.ox.ac.uk/public/favicon.ico">
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #17212b; background: #f4f7f9; }
+    body { margin: 0; }
+    main { width: min(760px, calc(100% - 32px)); margin: 40px auto; }
+    h1 { margin-bottom: 8px; }
+    p { line-height: 1.55; }
+    .card { background: white; border: 1px solid #d8e0e6; border-radius: 12px; padding: 24px; margin: 20px 0; box-shadow: 0 3px 12px #17212b0a; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    label { display: block; font-weight: 650; margin: 12px 0 6px; }
+    input, select { box-sizing: border-box; width: 100%; border: 1px solid #aab7c2; border-radius: 6px; padding: 10px 12px; font: inherit; background: white; }
+    input:focus, select:focus { outline: 3px solid #b7d7f4; border-color: #1769aa; }
+    button { border: 0; border-radius: 6px; padding: 11px 16px; margin-top: 16px; background: #1769aa; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+    button.secondary { background: #526372; margin-left: 8px; }
+    button:disabled { opacity: .55; cursor: wait; }
+    .muted { color: #526372; font-size: .94rem; }
+    .status { min-height: 1.5em; margin-top: 16px; }
+    .error { color: #a12622; }
+    .success { color: #176b3a; }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; gap: 0; } main { margin-top: 24px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Canvas Calendar to CSV</h1>
+  <p>Export dated events from a Canvas course calendar. The tool follows all result pages and downloads a CSV with the event title, description, date, start time, duration, location and address.</p>
 
-		<script src="https://code.jquery.com/jquery-3.6.0.js" type="text/javascript"></script>
-		<script>
-			$( document ).ready(function() {
-				let courseId = "123456";
-				//let courseId = "149024";
-				let start = "2022-10-09";
-				//let start = "2022-10-31";
-				const today = new Date()
-				let end = today.toISOString().split('T')[0];
-				//let end = "2023-02-19";
+  <section class="card" aria-labelledby="connection-title">
+    <h2 id="connection-title">Connect to Canvas</h2>
+    <label for="canvas-instance">Canvas instance</label>
+    <select id="canvas-instance">
+      <option value="canvas.ox.ac.uk">canvas.ox.ac.uk</option>
+      <option value="universityofoxford.beta.instructure.com">universityofoxford.beta.instructure.com</option>
+      <option value="universityofoxford.test.instructure.com">universityofoxford.test.instructure.com</option>
+      <option value="oxeval.instructure.com">oxeval.instructure.com</option>
+    </select>
+    <p class="muted">Create or copy an API token from the selected instance’s <a id="token-settings-link" href="https://canvas.ox.ac.uk/profile/settings" target="_blank" rel="noopener">Canvas profile settings</a>. Your token stays in this page’s memory and is cleared when you disconnect or reload.</p>
+    <label for="token">Canvas API token</label>
+    <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your Canvas API token">
+    <button id="connect" type="button">Connect</button>
+    <button id="disconnect" class="secondary" type="button" hidden>Disconnect</button>
+    <p id="connection-status" class="status muted" role="status" aria-live="polite">Not connected</p>
+  </section>
 
-				
-				$('#id').val(courseId);
-				$('#start').val(start);
-				$('#end').val(end);
-				let baseURL = updateURL(courseId, start, end);
+  <section class="card" aria-labelledby="export-title">
+    <h2 id="export-title">Export course events</h2>
+    <form id="export-form">
+      <label for="course-id">Numeric course ID</label>
+      <input id="course-id" name="courseId" inputmode="numeric" pattern="[0-9]+" required placeholder="e.g. 149024">
+      <div class="grid">
+        <div><label for="start-date">Start date</label><input id="start-date" name="startDate" type="date" required></div>
+        <div><label for="end-date">End date</label><input id="end-date" name="endDate" type="date" required></div>
+      </div>
+      <button id="export" type="submit" disabled>Fetch events and download CSV</button>
+    </form>
+    <p id="export-status" class="status muted" role="status" aria-live="polite"></p>
+  </section>
+  <p class="muted">Events are read from the course calendar only. Descriptions are exported as Canvas-provided HTML. Child events are excluded, as in the original tool.</p>
+</main>
+<script>
+(() => {
+  const instanceSelect = document.getElementById('canvas-instance');
+  const tokenSettingsLink = document.getElementById('token-settings-link');
+  let apiToken = '';
+  const tokenInput = document.getElementById('token');
+  const connectButton = document.getElementById('connect');
+  const disconnectButton = document.getElementById('disconnect');
+  const connectionStatus = document.getElementById('connection-status');
+  const exportForm = document.getElementById('export-form');
+  const exportButton = document.getElementById('export');
+  const exportStatus = document.getElementById('export-status');
 
-				$('#id').change(function() {
-					courseId = $('#id').val();
-					baseURL = updateURL(courseId, start, end);
-				});
-				$('#start').change(function() {
-					start = $('#start').val();
-					baseURL = updateURL(courseId, start, end);
-				});
-				$('#end').change(function() {
-					end = $('#end').val();
-					baseURL = updateURL(courseId, start, end);
-				});
-				
-				$('#convert').click(function() {
-					let json = getJSON(baseURL);
-					//let json = JSON.parse($('#json').val());
-					//convertToCSV(json);
-				});
-			});
+  setDefaultDates();
 
-			function updateURL(courseId, start, end) {
-				//Example API call to get calendar event JSON: https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=2022-07-17&end_date=2022-10-30&context_codes[]=course_149024&per_page=100
-				const baseURL = "https://canvas.ox.ac.uk/api/v1/calendar_events?start_date=" + start + "&end_date=" + end + "&context_codes[]=course_" + courseId + "&per_page=100&excludes[]=child_events";
-				
-				return baseURL; 
-				//$('#apilink').attr('href', URL);
-			}
-			
-			function getJSON(baseURL) {
-				console.log(baseURL);
-				let page = 1;
-				let URL = baseURL + "&page=" + page;
-				/*$.getJSON(URL, function(data) {
-					// The 'data' variable contains the JSON response
-					console.log(data);
-					// Do something with the data
-				})
-				.fail(function(xhr, status, error) {
-						console.error(status + ': ' + error);
-				});*/
-				
-				let finished = false;
-				
-				$.ajax({
-					url: URL,
-					dataType: 'json',
-					async: false, // Set async option to false
-					success: function(data) {
-						// The 'data' variable contains the JSON response
-						console.log(data);
-						
-						
-						// Do something with the data
-					},
-					error: function(xhr, status, error) {
-						console.error(status + ': ' + error);
-					}
-				});
-				
-			}
+  function selectedApiOrigin() { return `https://${instanceSelect.value}`; }
+  function updateTokenSettingsLink() { tokenSettingsLink.href = `${selectedApiOrigin()}/profile/settings`; }
+  instanceSelect.addEventListener('change', updateTokenSettingsLink);
 
-			function convertToCSV(json) {
-				const separator = ",";
-				
-				let csv = "Title" + separator + "Description" + separator + "Date" + separator + "Start" + separator + "Duration" + separator + "Location" + separator + "Address\r\n";
-				json.forEach((event, index) => { 
-					if(event.parent_event_id === null) {	//Ignore child events, although these are now excluded in the API call
-						let start = new Date(event.start_at);
-						let end = new Date(event.end_at);
-						let date = start.getDate()  + "/" + (start.getMonth() + 1)  + "/" + start.getFullYear();
-						let start_time = ('0' + start.getHours()).slice(-2) + ":" + ('0' + start.getMinutes()).slice(-2);
-						
-						let duration_secs = (end.getTime() - start.getTime())/1000;
-						let duration_hours = Math.floor(duration_secs/3600);
-						let duration_minutes = Math.floor((duration_hours*3600 - duration_secs)/60);
-						let duration = ('0' + duration_hours).slice(-2)  + ":" + ('0' + duration_minutes).slice(-2);
-						
-						//let start_split = event.start_at.split('-');
-						//let date = start_split[2].substring(0,2) + "/" + start_split[1] + "/" + start_split[0];
-						//let start_time = start_split[2].substring(3,8);
-						//let end_split = event.end_at.split('-');
-						//let end_time = end_split[2].substring(3,8);
-					
-						let title = event.title;
-						if(title === null) { title = ""; }
-						let description = event.description;
-						if(description === null) { description = ""; }
-						let location_name = event.location_name;
-						if(location_name === null) { location_name = ""; }
-						let location_address = event.location_address;
-						if(location_address === null) { location_address = ""; }
-					
-						csv += "\"" + title.replaceAll('"','""') + "\"" + separator + "\"" + description.replaceAll('"','""') + "\"" + separator + date + separator + start_time + separator + duration + separator + "\"" + location_name.replaceAll('"','""') + "\"" + separator + "\"" + location_address.replaceAll('"','""') + "\"\r\n";
-					}
-				 })
-				console.log(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e'));
+  function setDefaultDates() {
+    const today = new Date();
+    const yearAgoYear = today.getFullYear() - 1;
+    const yearAgoMonth = today.getMonth();
+    const yearAgoDay = Math.min(today.getDate(), new Date(yearAgoYear, yearAgoMonth + 1, 0).getDate());
+    const start = new Date(yearAgoYear, yearAgoMonth, yearAgoDay);
+    const daysSinceMonday = (start.getDay() + 6) % 7;
+    start.setDate(start.getDate() - daysSinceMonday);
+    document.getElementById('start-date').value = localDateValue(start);
+    document.getElementById('end-date').value = localDateValue(today);
+  }
 
-				//document.write(csv);
+  function localDateValue(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
 
-				// Once we are done looping, download the .csv by creating a link
-				let link = document.createElement('a')
-				link.id = 'download-csv-' + Date.now();
-				link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv.replaceAll( '\n\u003cp\u003e', '\u003cp\u003e')));
-				link.setAttribute('download', 'calendar_export.csv');
-				document.body.appendChild(link);
-				document.querySelector('#' + link.id).click();
-			}
-		</script>
-	</body>
+  connectButton.addEventListener('click', () => {
+    const candidate = tokenInput.value.trim();
+    if (!candidate) { setMessage(connectionStatus, 'Enter your Canvas API token.', 'error'); return; }
+    apiToken = candidate;
+    tokenInput.value = '';
+    instanceSelect.disabled = true;
+    connectButton.hidden = true;
+    tokenInput.disabled = true;
+    disconnectButton.hidden = false;
+    exportButton.disabled = false;
+    setMessage(connectionStatus, 'Token held in memory. Ready to export.', 'success');
+  });
+
+  disconnectButton.addEventListener('click', () => {
+    apiToken = '';
+    tokenInput.value = '';
+    instanceSelect.disabled = false;
+    tokenInput.disabled = false;
+    connectButton.hidden = false;
+    disconnectButton.hidden = true;
+    exportButton.disabled = true;
+    setMessage(connectionStatus, 'Disconnected. Token cleared.', 'muted');
+  });
+
+  exportForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!apiToken) { setMessage(exportStatus, 'Connect to Canvas first.', 'error'); return; }
+    const courseId = document.getElementById('course-id').value.trim();
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
+    if (!/^\d+$/.test(courseId) || Number(courseId) < 1) { setMessage(exportStatus, 'Enter a valid positive numeric course ID.', 'error'); return; }
+    if (!isDate(startDate) || !isDate(endDate) || endDate < startDate) { setMessage(exportStatus, 'Enter valid dates, with the end date on or after the start date.', 'error'); return; }
+
+    exportButton.disabled = true;
+    try {
+      setMessage(exportStatus, 'Fetching course details…', 'muted');
+      const courseName = await fetchCourseName(courseId);
+      const events = await fetchAllEvents(courseId, startDate, endDate, (n) => {
+        setMessage(exportStatus, `Fetched ${n} event${n === 1 ? '' : 's'}…`, 'muted');
+      });
+      const csv = makeCsv(events);
+      const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const safeCourseName = courseName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '-').replace(/[. ]+$/g, '').trim().slice(0, 120) || `Course ${courseId}`;
+      link.download = `Canvas Calendar Export - ${safeCourseName} - ${courseId} - ${startDate} to ${endDate}.csv`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setMessage(exportStatus, `Downloaded ${events.length} event${events.length === 1 ? '' : 's'} as CSV.`, 'success');
+    } catch (error) {
+      setMessage(exportStatus, error.message || 'Could not fetch calendar events.', 'error');
+    } finally {
+      exportButton.disabled = !apiToken;
+    }
+  });
+
+  async function fetchCourseName(courseId) {
+    const apiOrigin = selectedApiOrigin();
+    const url = `${apiOrigin}/api/v1/courses/${encodeURIComponent(courseId)}`;
+    const response = await fetch(`/canvas-proxy.php?url=${encodeURIComponent(url)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiToken}` }
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const retryAfter = response.status === 429 ? response.headers.get('Retry-After') : null;
+      const retryMessage = retryAfter ? ` Canvas asked you to retry after ${retryAfter} seconds.` : '';
+      throw new Error((body.error || `Could not retrieve course details (${response.status}). Check the course ID and your access.`) + retryMessage);
+    }
+    const course = await response.json();
+    if (!course || typeof course.name !== 'string' || !course.name.trim()) throw new Error('Canvas did not return a course name for this course ID.');
+    return course.name.trim();
+  }
+
+  async function fetchAllEvents(courseId, startDate, endDate, onCount) {
+    const apiOrigin = selectedApiOrigin();
+    const first = new URL(`${apiOrigin}/api/v1/calendar_events`);
+    first.searchParams.set('start_date', startDate);
+    first.searchParams.set('end_date', endDate);
+    first.searchParams.append('context_codes[]', `course_${courseId}`);
+    first.searchParams.set('per_page', '100');
+    first.searchParams.append('excludes[]', 'child_events');
+    let next = first.href;
+    const all = [];
+    const seen = new Set();
+    while (next) {
+      if (seen.has(next)) throw new Error('Canvas returned a repeated pagination link; export stopped to avoid a loop.');
+      seen.add(next);
+      const response = await fetch(`/canvas-proxy.php?url=${encodeURIComponent(next)}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiToken}` }
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        const retryAfter = response.status === 429 ? response.headers.get('Retry-After') : null;
+        const retryMessage = retryAfter ? ` Canvas asked you to retry after ${retryAfter} seconds.` : '';
+        throw new Error((body.error || `Canvas request failed (${response.status}). Check the token, course access and date range.`) + retryMessage);
+      }
+      const page = await response.json();
+      if (!Array.isArray(page)) throw new Error('Canvas returned an unexpected response.');
+      all.push(...page);
+      onCount(all.length);
+      next = getNextLink(response.headers.get('Link'));
+      if (next) {
+        const parsed = new URL(next);
+        if (parsed.origin !== apiOrigin || parsed.pathname !== '/api/v1/calendar_events') throw new Error('Canvas returned an unexpected pagination destination.');
+      }
+    }
+    return all.filter((item) => item && item.parent_event_id == null);
+  }
+
+  function getNextLink(header) {
+    if (!header) return null;
+    for (const part of header.split(/,\s*(?=<)/)) {
+      const match = part.match(/^\s*<([^>]+)>\s*;\s*rel="?([^";]+)"?/);
+      if (match && match[2].split(/\s+/).includes('next')) return match[1];
+    }
+    return null;
+  }
+
+  function makeCsv(events) {
+    const rows = [['Title', 'Description', 'Date', 'Start', 'Duration', 'Location', 'Address']];
+    for (const item of events) {
+      const startAt = String(item.start_at || '');
+      const endAt = String(item.end_at || '');
+      const startMatch = startAt.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+      const startMs = Date.parse(startAt);
+      const endMs = Date.parse(endAt);
+      let date = '', time = '', duration = '';
+      if (startMatch) { date = startMatch[1]; time = startMatch[2]; }
+      if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs) {
+        const minutes = Math.round((endMs - startMs) / 60000);
+        duration = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+      }
+      rows.push([item.title || '', item.description || '', date, time, duration, item.location_name || '', item.location_address || '']);
+    }
+    return rows.map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  }
+
+  function csvCell(value) { return `"${String(value ?? '').replace(/"/g, '""')}"`; }
+  function isDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(`${value}T00:00:00Z`);
+    return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }
+  function setMessage(element, text, kind) { element.textContent = text; element.className = `status ${kind}`; }
+})();
+</script>
+</body>
 </html>
